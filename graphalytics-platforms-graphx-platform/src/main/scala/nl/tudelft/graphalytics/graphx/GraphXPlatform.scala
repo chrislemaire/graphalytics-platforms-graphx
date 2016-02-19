@@ -33,6 +33,7 @@ import nl.tudelft.graphalytics.graphx.lcc.LocalClusteringCoefficientJob
  * Constants for GraphXPlatform
  */
 object GraphXPlatform {
+	val OUTPUT_DIRECTORY = "benchmark.run.output-directory"
 	val HDFS_DIRECTORY_KEY = "hadoop.hdfs.directory"
 	val HDFS_DIRECTORY = "graphalytics"
 
@@ -95,12 +96,19 @@ class GraphXPlatform extends Platform {
 
 			if (job.hasValidInput) {
 				job.runJob()
+
+				// TODO: fetch output from hdfs. This should not be in this section!
+				val fs = FileSystem.get(new Configuration())
+				fs.copyToLocalFile(new Path(outPath), new Path(OUTPUT_DIRECTORY))
+				fs.close()
+
 				// TODO: After executing the job, any intermediate and output data should be
 				// verified and/or cleaned up. This should preferably be configurable.
 				new PlatformBenchmarkResult(NestedConfiguration.empty())
 			} else {
 				throw new IllegalArgumentException("Invalid parameters for job")
 			}
+
 		} catch {
 			case e : Exception => throw new PlatformExecutionException("GraphX job failed with exception: ", e)
 		}
