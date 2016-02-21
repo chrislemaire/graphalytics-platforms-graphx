@@ -61,7 +61,9 @@ abstract class GraphXJob[VD : ClassTag, ED : ClassTag](graphVertexPath : String,
 		val output = makeOutput(result)
 
 		// Write the result
+		println("OffloadGraph StartTime" + System.currentTimeMillis());
 		output.writeToPath(outputPath)
+		println("OffloadGraph EndTime" + System.currentTimeMillis());
 
 		// Clean up
 		result.unpersistVertices(blocking = false)
@@ -78,14 +80,17 @@ abstract class GraphXJob[VD : ClassTag, ED : ClassTag](graphVertexPath : String,
 	 * @return the output of the job
 	 */
 	def executeOnGraph(vertexData : RDD[String], edgeData : RDD[String]) : Graph[VD, ED] = {
+
+		println("LoadGraph StartTime" + System.currentTimeMillis());
+
 		// Parse the vertex and edge data
 		val graph = GraphLoader.loadGraph(vertexData, edgeData,
 		                                  parseVertexData, parseEdgeData,
 		                                  graphFormat).cache()
-
 		graph.vertices.count()
 		graph.edges.count()
-		println("Start Algorithm" + System.currentTimeMillis());
+		println("LoadGraph EndTime" + System.currentTimeMillis());
+		println("ProcessGraph StartTime" + System.currentTimeMillis());
 
 		// Run the graph computation
 		val output = compute(graph).cache()
@@ -93,7 +98,7 @@ abstract class GraphXJob[VD : ClassTag, ED : ClassTag](graphVertexPath : String,
 		// Materialize the output and clean up the original graph
 		output.vertices.count()
 		output.edges.count()
-		println("End Algorithm" + System.currentTimeMillis());
+		println("ProcessGraph EndTime" + System.currentTimeMillis());
 
 		graph.unpersistVertices(blocking = false)
 		graph.edges.unpersist(blocking = false)
