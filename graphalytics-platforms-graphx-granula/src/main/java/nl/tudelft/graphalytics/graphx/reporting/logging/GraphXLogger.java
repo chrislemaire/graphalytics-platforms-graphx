@@ -30,9 +30,25 @@ import java.nio.file.Path;
  */
 public class GraphXLogger extends GraphalyticLogger {
 
+    private static PrintStream console;
     protected static Level platformLogLevel = Level.INFO;
 
     public static void startPlatformLogging(Path fileName) {
+        console = System.out;
+        try {
+            File file = null;
+            file = fileName.toFile();
+            file.getParentFile().mkdirs();
+            file.createNewFile();
+            FileOutputStream fos = new FileOutputStream(file);
+            PrintStream ps = new PrintStream(fos);
+            System.setOut(ps);
+        } catch(Exception e) {
+            e.printStackTrace();
+            throw new IllegalArgumentException("cannot redirect to output file");
+        }
+
+
         Logger.getRootLogger().removeAllAppenders();
         FileAppender fa = new FileAppender();
         fa.setName("FileLogger");
@@ -47,6 +63,7 @@ public class GraphXLogger extends GraphalyticLogger {
 
     public static void stopPlatformLogging() {
         Logger.getRootLogger().removeAllAppenders();
+        System.setOut(console);
     }
 
 
